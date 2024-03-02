@@ -1,0 +1,40 @@
+%
+% @author Lukáš Hronek <l.hronek@email.cz>
+%
+% @description Settings for minted to copy text 
+%              without line numbers. 
+
+ 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{cpsrc}[macros]
+
+\RequirePackage{minted}
+\RequirePackage{tikz}
+\RequirePackage{graphicx}
+
+\RenewDocumentCommand\theFancyVerbLine{}{%
+    \tikz[remember picture] \coordinate (line\the\value{FancyVerbLine});% remember this location
+    % --
+    \rmfamily\tiny\phantom{\arabic{FancyVerbLine}}% leave space equal to the line number itself
+    % \tiny must be outside any group so that it applies to the following \kern
+    % --
+    \xappto\typesetPendingLineNumbers{\actualTypesetLineNumber{\the\value{FancyVerbLine}}}% remember to typeset it later
+}
+
+% this command must be robust because it's used inside \xappto
+\NewDocumentCommand\actualTypesetLineNumber{m}{%
+    \node [anchor=south west, inner sep=0pt] at (line#1){\rmfamily\tiny#1};% actually typeset it now, need to copy the \tiny here
+}
+
+\AddToHook{env/minted/begin}{%
+    \gdef\typesetPendingLineNumbers{}%
+}
+
+\AddToHook{env/minted/after}{%
+    \begin{tikzpicture}[remember picture, overlay]%
+    \typesetPendingLineNumbers
+    \end{tikzpicture}%
+}
+
+\definecolor{bg}{rgb}{0.96,0.96,0.96}
+\setminted{bgcolor=bg}
